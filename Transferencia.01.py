@@ -238,7 +238,22 @@ def verificar_atualizacao_simples(mostrar_logs=False):
             else:
                 logs.append("Nenhuma atualização necessária")
         else:
-            logs.append("Arquivo local não encontrado")
+            logs.append("Arquivo local nao encontrado")
+            logs.append("Tentando baixar arquivo do GitHub...")
+            
+            try:
+                response_script = requests.get(URL_GITHUB_RAW, timeout=10)
+                logs.append(f"Download status: {response_script.status_code}")
+                
+                if response_script.status_code == 200:
+                    with open(script_local, "w", encoding="utf-8") as f:
+                        f.write(response_script.text)
+                    logs.append("Arquivo baixado com sucesso!")
+                    if mostrar_logs:
+                        exibir_logs(logs)
+                    return True
+            except Exception as e:
+                logs.append(f"Erro ao baixar: {str(e)}")
     except Exception as e:
         logs.append(f"Erro na verificação: {str(e)}")
     
