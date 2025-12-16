@@ -854,12 +854,6 @@ if __name__ == "__main__":
     
     btn_headless = None
     
-    if verificar_atualizacao_simples():
-        messagebox.showinfo("Atualização", "✅ Aplicativo foi atualizado com sucesso!\n\nFavor reiniciar para carregar as mudanças.")
-        root.destroy()
-        import sys
-        sys.exit(0)
-    
     # Estilos
     style = ttk.Style()
     def setup_styles():
