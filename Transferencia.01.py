@@ -204,20 +204,18 @@ def verificar_atualizacao_simples():
         
         script_local = os.path.join(BASE_DIR, "Transferencia.01.py")
         
-        if not os.path.exists(script_local):
-            return False
-        
-        hash_local = calcular_hash_arquivo(script_local)
-        
-        if hash_github and hash_github != hash_local and hash_github != "exe_build":
-            try:
-                response_script = requests.get(URL_GITHUB_RAW, timeout=10)
-                if response_script.status_code == 200:
-                    with open(script_local, "w", encoding="utf-8") as f:
-                        f.write(response_script.text)
-                    return True
-            except Exception:
-                pass
+        if os.path.exists(script_local):
+            hash_local = calcular_hash_arquivo(script_local)
+            
+            if hash_github and hash_github != hash_local and hash_github != "exe_build":
+                try:
+                    response_script = requests.get(URL_GITHUB_RAW, timeout=10)
+                    if response_script.status_code == 200:
+                        with open(script_local, "w", encoding="utf-8") as f:
+                            f.write(response_script.text)
+                        return True
+                except Exception:
+                    pass
     except Exception:
         pass
     
@@ -797,7 +795,7 @@ def toggle_modo_headless():
 
 if __name__ == "__main__":
     root = ttk.Window(themename="litera")
-    root.title("🤖 Ordem e Ajuste 2.5.3")
+    root.title("🤖 Ordem e Ajuste 2.5.4")
     root.geometry("900x800")
     
     btn_headless = None
