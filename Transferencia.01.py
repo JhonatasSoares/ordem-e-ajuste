@@ -192,34 +192,73 @@ def verificar_atualizacao_app():
     return False
 
 
-def verificar_atualizacao_simples():
+def verificar_atualizacao_simples(mostrar_logs=False):
     """Verifica atualização simples via GitHub."""
+    logs = []
     try:
+        logs.append("Conectando ao GitHub...")
         response = requests.get(URL_GITHUB_VERSAO, timeout=5)
+        logs.append(f"Status: {response.status_code}")
+        
         if response.status_code != 200:
+            logs.append("Erro ao conectar ao GitHub")
+            if mostrar_logs:
+                exibir_logs(logs)
             return False
         
         dados_github = response.json()
         hash_github = dados_github.get("hash", "")
+        logs.append(f"Hash do GitHub: {hash_github}")
         
         script_local = os.path.join(BASE_DIR, "Transferencia.01.py")
+        logs.append(f"Caminho local: {script_local}")
+        logs.append(f"Existe localmente: {os.path.exists(script_local)}")
         
         if os.path.exists(script_local):
             hash_local = calcular_hash_arquivo(script_local)
+            logs.append(f"Hash local: {hash_local}")
+            logs.append(f"Hashes diferentes: {hash_github != hash_local}")
+            logs.append(f"Nao eh exe_build: {hash_github != 'exe_build'}")
             
             if hash_github and hash_github != hash_local and hash_github != "exe_build":
+                logs.append("ATUALIZANDO ARQUIVO...")
                 try:
                     response_script = requests.get(URL_GITHUB_RAW, timeout=10)
+                    logs.append(f"Download status: {response_script.status_code}")
+                    
                     if response_script.status_code == 200:
                         with open(script_local, "w", encoding="utf-8") as f:
                             f.write(response_script.text)
+                        logs.append("Arquivo atualizado com sucesso!")
+                        if mostrar_logs:
+                            exibir_logs(logs)
                         return True
-                except Exception:
-                    pass
-    except Exception:
-        pass
+                except Exception as e:
+                    logs.append(f"Erro ao baixar: {str(e)}")
+            else:
+                logs.append("Nenhuma atualização necessária")
+        else:
+            logs.append("Arquivo local não encontrado")
+    except Exception as e:
+        logs.append(f"Erro na verificação: {str(e)}")
     
+    if mostrar_logs:
+        exibir_logs(logs)
     return False
+
+def exibir_logs(logs):
+    """Exibe logs em uma janela."""
+    janela_logs = tk.Toplevel(root)
+    janela_logs.title("Logs de Verificacao")
+    janela_logs.geometry("600x400")
+    
+    text_box = scrolledtext.ScrolledText(janela_logs, height=20, width=70)
+    text_box.pack(padx=10, pady=10, fill="both", expand=True)
+    
+    for log in logs:
+        text_box.insert(tk.END, log + "\n")
+    
+    text_box.config(state="disabled")
 
 
 def type_by_chars(element, text, delay=0.02):
@@ -795,7 +834,7 @@ def toggle_modo_headless():
 
 if __name__ == "__main__":
     root = ttk.Window(themename="litera")
-    root.title("🤖 Ordem e Ajuste 2.5.3")
+    root.title("🤖 Ordem e Ajuste 2.5.4")
     root.geometry("900x800")
     
     btn_headless = None
@@ -834,6 +873,7 @@ if __name__ == "__main__":
     ttk.Button(fr_top, text="⚙️ Config User", command=open_config_user, bootstyle="outline").pack(side="left", padx=5)
     ttk.Button(fr_top, text="🧪 Testar Login", command=test_login_gui, bootstyle="outline").pack(side="left", padx=5)
     ttk.Button(fr_top, text="📄 Abrir Excel", command=abrir_ou_criar_planilha_ajuste, bootstyle="outline").pack(side="left", padx=5)
+    ttk.Button(fr_top, text="🔍 Verificar Update", command=lambda: verificar_atualizacao_simples(mostrar_logs=True), bootstyle="info-outline").pack(side="left", padx=5)
     btn_headless = ttk.Button(fr_top, text="🖥️ Headless", command=toggle_modo_headless, bootstyle="success-outline")
     btn_headless.pack(side="left", padx=5)
 
