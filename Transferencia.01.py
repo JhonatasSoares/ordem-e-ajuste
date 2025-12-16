@@ -192,11 +192,8 @@ def verificar_atualizacao_app():
     return False
 
 
-def verificar_atualizacao_exe():
-    """Verifica e baixa atualização do .exe se disponível."""
-    if not getattr(sys, 'frozen', False):
-        return False
-    
+def verificar_atualizacao_simples():
+    """Verifica atualização simples via GitHub."""
     try:
         response = requests.get(URL_GITHUB_VERSAO, timeout=5)
         if response.status_code != 200:
@@ -205,50 +202,24 @@ def verificar_atualizacao_exe():
         dados_github = response.json()
         hash_github = dados_github.get("hash", "")
         
-        if hash_github == "exe_build":
-            exe_atual = sys.executable
-            temp_exe = exe_atual + ".tmp"
-            
+        script_local = os.path.join(BASE_DIR, "Transferencia.01.py")
+        
+        if not os.path.exists(script_local):
+            return False
+        
+        hash_local = calcular_hash_arquivo(script_local)
+        
+        if hash_github and hash_github != hash_local and hash_github != "exe_build":
             try:
-                response_exe = requests.get(URL_GITHUB_EXE, timeout=30, stream=True)
-                if response_exe.status_code == 200:
-                    total_size = int(response_exe.headers.get('content-length', 0))
-                    
-                    janela_progresso = tk.Tk()
-                    janela_progresso.title("Atualização")
-                    janela_progresso.geometry("400x150")
-                    janela_progresso.resizable(False, False)
-                    
-                    ttk.Label(janela_progresso, text="Baixando atualização...", font=("Arial", 12)).pack(pady=10)
-                    pbar = ttk.Progressbar(janela_progresso, mode='determinate', maximum=100)
-                    pbar.pack(fill='x', padx=20, pady=10)
-                    lbl_percent = ttk.Label(janela_progresso, text="0%", font=("Arial", 10))
-                    lbl_percent.pack()
-                    
-                    janela_progresso.update()
-                    
-                    with open(temp_exe, 'wb') as f:
-                        downloaded = 0
-                        for chunk in response_exe.iter_content(chunk_size=8192):
-                            if chunk:
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                progress = (downloaded / total_size * 100) if total_size > 0 else 0
-                                pbar['value'] = progress
-                                lbl_percent.config(text=f"{progress:.1f}%")
-                                janela_progresso.update()
-                    
-                    janela_progresso.destroy()
-                    
-                    shutil.move(temp_exe, exe_atual)
+                response_script = requests.get(URL_GITHUB_RAW, timeout=10)
+                if response_script.status_code == 200:
+                    with open(script_local, "w", encoding="utf-8") as f:
+                        f.write(response_script.text)
                     return True
-            except Exception as e:
-                print(f"Erro ao baixar .exe: {e}")
-                if os.path.exists(temp_exe):
-                    os.remove(temp_exe)
-                return False
-    except Exception as e:
-        print(f"Erro ao verificar atualização .exe: {e}")
+            except Exception:
+                pass
+    except Exception:
+        pass
     
     return False
 
@@ -831,18 +802,8 @@ if __name__ == "__main__":
     
     btn_headless = None
     
-    if verificar_atualizacao_exe():
-        messagebox.showinfo("Atualização", "✅ Executável foi atualizado com sucesso!\n\nFavor reiniciar o aplicativo para carregar as mudanças.")
-        root.destroy()
-        exit(0)
-    
-    if verificar_atualizacao_github():
-        messagebox.showinfo("Atualização", "✅ Aplicativo foi atualizado com sucesso!\n\nFavor reiniciar o aplicativo para carregar as mudanças.")
-        root.destroy()
-        exit(0)
-    
-    if verificar_atualizacao_app():
-        messagebox.showinfo("Atualização", "✅ Aplicativo foi atualizado!\n\nFavor reiniciar o aplicativo para carregar as mudanças.")
+    if verificar_atualizacao_simples():
+        messagebox.showinfo("Atualização", "✅ Aplicativo foi atualizado com sucesso!\n\nFavor reiniciar para carregar as mudanças.")
         root.destroy()
         exit(0)
     
