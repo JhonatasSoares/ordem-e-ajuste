@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import time
 import traceback
@@ -27,18 +28,24 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
+# Detectar diretório base (funciona tanto para .py quanto para .exe)
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # -----------------------------------------------------------------------------
 # CONSTANTES E CONFIGURAÇÕES
 # -----------------------------------------------------------------------------
 
-NOME_ARQUIVO_EXCEL = "Ajuste.xlsx"
-USUARIO_JSON = "usuario.json"
+NOME_ARQUIVO_EXCEL = os.path.join(BASE_DIR, "Ajuste.xlsx")
+USUARIO_JSON = os.path.join(BASE_DIR, "usuario.json")
 SHEET_ERROS = "Erros"
-ARQUIVO_VERSAO = "app_version.json"
+ARQUIVO_VERSAO = os.path.join(BASE_DIR, "app_version.json")
 
 # URLs - ALTERE PARA SEU REPOSITÓRIO GITHUB
-URL_GITHUB_RAW = "https://raw.githubusercontent.com/SEU_USER/SEU_REPO/main/Transferencia.01.py"
-URL_GITHUB_VERSAO = "https://raw.githubusercontent.com/SEU_USER/SEU_REPO/main/app_version.json"
+URL_GITHUB_RAW = "https://raw.githubusercontent.com/JhonatasPSoares/ordem-e-ajuste/main/Transferencia.01.py"
+URL_GITHUB_VERSAO = "https://raw.githubusercontent.com/JhonatasPSoares/ordem-e-ajuste/main/app_version.json"
 
 # URLs
 URL_LOGIN = "https://nespresso.wiser.log.br/login"
@@ -76,7 +83,7 @@ COLUNA_SERIAL = 'Serial'
 # Variáveis Globais de Controle
 automacao_transferencia_rodando = False
 automacao_transferencia_pausada = False
-modo_headless = False
+modo_headless = True
 
 
 # -----------------------------------------------------------------------------
@@ -108,9 +115,16 @@ def calcular_hash_arquivo(caminho_arquivo):
 
 def salvar_versao_app():
     """Salva a versão/hash do aplicativo atual."""
-    script_atual = os.path.abspath(__file__)
-    hash_app = calcular_hash_arquivo(script_atual)
     timestamp = datetime.now().isoformat()
+    
+    if getattr(sys, 'frozen', False):
+        hash_app = "exe_build"
+    else:
+        script_atual = os.path.join(BASE_DIR, "Transferencia.01.py")
+        if os.path.exists(script_atual):
+            hash_app = calcular_hash_arquivo(script_atual)
+        else:
+            hash_app = "unknown"
     
     with open(ARQUIVO_VERSAO, "w", encoding="utf-8") as f:
         json.dump({"hash": hash_app, "timestamp": timestamp}, f)
@@ -118,6 +132,9 @@ def salvar_versao_app():
 
 def verificar_atualizacao_github():
     """Verifica e baixa atualização do GitHub se disponível."""
+    if getattr(sys, 'frozen', False):
+        return False
+    
     try:
         response = requests.get(URL_GITHUB_VERSAO, timeout=5)
         if response.status_code != 200:
@@ -126,7 +143,9 @@ def verificar_atualizacao_github():
         dados_github = response.json()
         hash_github = dados_github.get("hash", "")
         
-        script_atual = os.path.abspath(__file__)
+        script_atual = os.path.join(BASE_DIR, "Transferencia.01.py")
+        if not os.path.exists(script_atual):
+            return False
         hash_atual = calcular_hash_arquivo(script_atual)
         
         if hash_github and hash_github != hash_atual:
@@ -148,7 +167,12 @@ def verificar_atualizacao_github():
 
 def verificar_atualizacao_app():
     """Verifica se o aplicativo foi atualizado desde a última execução."""
-    script_atual = os.path.abspath(__file__)
+    if getattr(sys, 'frozen', False):
+        return False
+    
+    script_atual = os.path.join(BASE_DIR, "Transferencia.01.py")
+    if not os.path.exists(script_atual):
+        return False
     hash_atual = calcular_hash_arquivo(script_atual)
     
     if os.path.exists(ARQUIVO_VERSAO):
@@ -739,7 +763,7 @@ def toggle_modo_headless():
 
 if __name__ == "__main__":
     root = ttk.Window(themename="litera")
-    root.title("🤖 Ordem e Ajuste 2.0")
+    root.title("🤖 Ordem e Ajuste 2.5.1")
     root.geometry("900x800")
     
     btn_headless = None
@@ -766,7 +790,7 @@ if __name__ == "__main__":
     # Header
     hdr = ttk.Frame(root, padding=15)
     hdr.pack(fill='x')
-    ttk.Label(hdr, text="Ordem e Ajuste 2.0", font=("Inter", 18, "bold")).pack(side='left')
+    ttk.Label(hdr, text="Ordem e Ajuste", font=("Inter", 18, "bold")).pack(side='left')
     ttk.Checkbutton(hdr, text="Modo Escuro", variable=theme_var, command=setup_styles, bootstyle="round-toggle").pack(side='right')
 
     # Abas
@@ -783,7 +807,7 @@ if __name__ == "__main__":
     ttk.Button(fr_top, text="⚙️ Config User", command=open_config_user, bootstyle="outline").pack(side="left", padx=5)
     ttk.Button(fr_top, text="🧪 Testar Login", command=test_login_gui, bootstyle="outline").pack(side="left", padx=5)
     ttk.Button(fr_top, text="📄 Abrir Excel", command=abrir_ou_criar_planilha_ajuste, bootstyle="outline").pack(side="left", padx=5)
-    btn_headless = ttk.Button(fr_top, text="🖥️ Headless", command=toggle_modo_headless, bootstyle="danger-outline")
+    btn_headless = ttk.Button(fr_top, text="🖥️ Headless", command=toggle_modo_headless, bootstyle="success-outline")
     btn_headless.pack(side="left", padx=5)
 
     # Inputs de Criação
