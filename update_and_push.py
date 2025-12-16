@@ -1,6 +1,8 @@
 import hashlib
 import json
 import subprocess
+import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -8,6 +10,7 @@ SCRIPT_FILE = "Transferencia.01.py"
 VERSION_FILE = "app_version.json"
 REQUIREMENTS_FILE = "requirements.txt"
 LAST_IMPORTS_FILE = ".last_imports.json"
+GITHUB_REPO = "JhonatasPSoares/ordem-e-ajuste"
 
 def calcular_hash(arquivo):
     sha256_hash = hashlib.sha256()
@@ -46,8 +49,12 @@ def verificar_mudanca_dependencias():
     
     return False
 
-def atualizar_versao():
-    novo_hash = calcular_hash(SCRIPT_FILE)
+def atualizar_versao(com_exe=False):
+    if com_exe:
+        novo_hash = "exe_build"
+    else:
+        novo_hash = calcular_hash(SCRIPT_FILE)
+    
     timestamp = datetime.now().isoformat()
     
     dados = {
@@ -67,21 +74,59 @@ def fazer_commit(mensagem):
         subprocess.run(["git", "commit", "-m", mensagem], check=True, capture_output=True)
         subprocess.run(["git", "push"], check=True, capture_output=True)
         print(f"✅ Commit realizado e enviado: {mensagem}")
+        return True
     except subprocess.CalledProcessError as e:
         print(f"❌ Erro no Git: {e}")
+        return False
 
 def gerar_exe():
     try:
         print("🔨 Gerando executável...")
+        
+        if os.path.exists("build"):
+            shutil.rmtree("build")
+        if os.path.exists("dist"):
+            shutil.rmtree("dist")
+        for spec_file in Path(".").glob("*.spec"):
+            spec_file.unlink()
+        
         subprocess.run(["python", "-m", "PyInstaller", "--onefile", "--windowed", SCRIPT_FILE], check=True)
         print("✅ Executável criado em: dist/Transferencia.01.exe")
+        return True
     except subprocess.CalledProcessError as e:
         print(f"❌ Erro ao gerar .exe: {e}")
+        return False
+
+def fazer_release(tag="latest"):
+    try:
+        exe_path = "dist/Transferencia.01.exe"
+        
+        if not os.path.exists(exe_path):
+            print(f"❌ Arquivo {exe_path} não encontrado!")
+            return False
+        
+        print(f"📤 Fazendo upload do .exe para Release '{tag}'...")
+        
+        subprocess.run(["gh", "release", "delete", tag, "-y"], capture_output=True)
+        subprocess.run(["git", "tag", "-d", tag], capture_output=True)
+        subprocess.run(["git", "push", "origin", f":{tag}"], capture_output=True)
+        
+        subprocess.run(["git", "tag", tag], check=True, capture_output=True)
+        subprocess.run(["git", "push", "origin", tag], check=True, capture_output=True)
+        
+        subprocess.run(["gh", "release", "create", tag, exe_path, "--title", f"Transferencia.01 ({tag})", "--latest"], check=True)
+        
+        print(f"✅ Release '{tag}' criada com sucesso!")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Erro ao criar release: {e}")
+        print("⚠️  Certifique-se de ter 'gh' (GitHub CLI) instalado: https://cli.github.com")
+        return False
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("🚀 Atualizar e Fazer Push para GitHub")
-    print("=" * 50)
+    print("=" * 60)
+    print("🚀 ATUALIZAR E FAZER PUSH PARA GITHUB")
+    print("=" * 60)
     
     mensagem = input("\n📝 Digite a mensagem de commit (ex: Fix: corrigir erro de login): ").strip()
     
@@ -91,18 +136,22 @@ if __name__ == "__main__":
     
     print("\n⏳ Processando...")
     
-    atualizar_versao()
-    fazer_commit(mensagem)
+    tem_mudanca_deps = verificar_mudanca_dependencias()
     
-    if verificar_mudanca_dependencias():
-        print("\n⚠️  Detalhadas mudanças nas dependências!")
-        gerar_exe_opcao = input("🔨 Gerar novo .exe? (s/n): ").strip().lower()
-        if gerar_exe_opcao == "s":
-            gerar_exe()
+    if tem_mudanca_deps:
+        print("\n⚠️  Detectadas mudanças nas dependências!")
+        atualizar_versao(com_exe=True)
+        fazer_commit(mensagem)
+        
+        if gerar_exe():
+            print("\n🔗 Criando Release no GitHub...")
+            fazer_release()
     else:
         print("\n✨ Nenhuma mudança de dependências detectada.")
+        atualizar_versao(com_exe=False)
+        fazer_commit(mensagem)
         print("   (Usuários receberão atualização automática do .py)")
     
-    print("\n" + "=" * 50)
-    print("✅ Tudo pronto! Seu app foi atualizado.")
-    print("=" * 50)
+    print("\n" + "=" * 60)
+    print("✅ TUDO PRONTO! SEU APP FOI ATUALIZADO.")
+    print("=" * 60)

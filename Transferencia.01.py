@@ -46,6 +46,7 @@ ARQUIVO_VERSAO = os.path.join(BASE_DIR, "app_version.json")
 # URLs - ALTERE PARA SEU REPOSITÓRIO GITHUB
 URL_GITHUB_RAW = "https://raw.githubusercontent.com/JhonatasPSoares/ordem-e-ajuste/main/Transferencia.01.py"
 URL_GITHUB_VERSAO = "https://raw.githubusercontent.com/JhonatasPSoares/ordem-e-ajuste/main/app_version.json"
+URL_GITHUB_EXE = "https://github.com/JhonatasPSoares/ordem-e-ajuste/releases/download/latest/Transferencia.01.exe"
 
 # URLs
 URL_LOGIN = "https://nespresso.wiser.log.br/login"
@@ -186,6 +187,67 @@ def verificar_atualizacao_app():
     else:
         salvar_versao_app()
         return False
+    
+    return False
+
+
+def verificar_atualizacao_exe():
+    """Verifica e baixa atualização do .exe se disponível."""
+    if not getattr(sys, 'frozen', False):
+        return False
+    
+    try:
+        response = requests.get(URL_GITHUB_VERSAO, timeout=5)
+        if response.status_code != 200:
+            return False
+        
+        dados_github = response.json()
+        hash_github = dados_github.get("hash", "")
+        
+        if hash_github == "exe_build":
+            exe_atual = sys.executable
+            temp_exe = exe_atual + ".tmp"
+            
+            try:
+                response_exe = requests.get(URL_GITHUB_EXE, timeout=30, stream=True)
+                if response_exe.status_code == 200:
+                    total_size = int(response_exe.headers.get('content-length', 0))
+                    
+                    janela_progresso = tk.Tk()
+                    janela_progresso.title("Atualização")
+                    janela_progresso.geometry("400x150")
+                    janela_progresso.resizable(False, False)
+                    
+                    ttk.Label(janela_progresso, text="Baixando atualização...", font=("Arial", 12)).pack(pady=10)
+                    pbar = ttk.Progressbar(janela_progresso, mode='determinate', maximum=100)
+                    pbar.pack(fill='x', padx=20, pady=10)
+                    lbl_percent = ttk.Label(janela_progresso, text="0%", font=("Arial", 10))
+                    lbl_percent.pack()
+                    
+                    janela_progresso.update()
+                    
+                    with open(temp_exe, 'wb') as f:
+                        downloaded = 0
+                        for chunk in response_exe.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                                downloaded += len(chunk)
+                                progress = (downloaded / total_size * 100) if total_size > 0 else 0
+                                pbar['value'] = progress
+                                lbl_percent.config(text=f"{progress:.1f}%")
+                                janela_progresso.update()
+                    
+                    janela_progresso.destroy()
+                    
+                    shutil.move(temp_exe, exe_atual)
+                    return True
+            except Exception as e:
+                print(f"Erro ao baixar .exe: {e}")
+                if os.path.exists(temp_exe):
+                    os.remove(temp_exe)
+                return False
+    except Exception as e:
+        print(f"Erro ao verificar atualização .exe: {e}")
     
     return False
 
@@ -767,6 +829,11 @@ if __name__ == "__main__":
     root.geometry("900x800")
     
     btn_headless = None
+    
+    if verificar_atualizacao_exe():
+        messagebox.showinfo("Atualização", "✅ Executável foi atualizado com sucesso!\n\nFavor reiniciar o aplicativo para carregar as mudanças.")
+        root.destroy()
+        exit(0)
     
     if verificar_atualizacao_github():
         messagebox.showinfo("Atualização", "✅ Aplicativo foi atualizado com sucesso!\n\nFavor reiniciar o aplicativo para carregar as mudanças.")
