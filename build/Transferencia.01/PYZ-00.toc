@@ -1,4 +1,4 @@
-('c:\\Users\\NNSoaresJh\\OneDrive - NESTLE\\Área de Trabalho\\Code Ordem e '
+('C:\\Users\\NNSoaresJh\\OneDrive - NESTLE\\Área de Trabalho\\Code Ordem e '
  'ajuste\\build\\Transferencia.01\\PYZ-00.pyz',
  [('PIL',
    'C:\\Users\\NNSoaresJh\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\PIL\\__init__.py',

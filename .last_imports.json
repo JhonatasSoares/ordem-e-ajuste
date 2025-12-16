@@ -26,5 +26,6 @@
   "import traceback",
   "import ttkbootstrap as ttk",
   "import undetected_chromedriver as uc",
+  "import warnings",
   "import winreg"
 ]
