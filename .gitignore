@@ -20,6 +20,12 @@ wheels/
 .installed.cfg
 *.egg
 
+# Arquivo principal (NAO ENVIAR PARA USUARIO)
+Transferencia.01.py
+update_and_push.py
+gerar_exe.py
+auto_build.py
+
 # Virtual environments
 venv/
 ENV/
@@ -38,18 +44,15 @@ env/
 *.log
 logs/
 
-# Dependencies
-requirements.txt
-
 # Build files
 *.spec
-*.exe
 dist/
 build/
 
 # Sensitive files
 usuario.json
 .last_imports.json
+app_version.json
 
 # Excel files (dados temporários)
 Ajuste.xlsx
@@ -61,3 +64,4 @@ Ajuste.xlsx
 # OS
 Thumbs.db
 .DS_Store
+
