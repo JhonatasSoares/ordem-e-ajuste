@@ -45,9 +45,9 @@ SHEET_ERROS = "Erros"
 ARQUIVO_VERSAO = os.path.join(BASE_DIR, "app_version.json")
 
 # URLs - ALTERE PARA SEU REPOSITÓRIO GITHUB
-URL_GITHUB_RAW = "https://raw.githubusercontent.com/JhonatasPSoares/ordem-e-ajuste/main/Transferencia.01.py"
-URL_GITHUB_VERSAO = "https://raw.githubusercontent.com/JhonatasPSoares/ordem-e-ajuste/main/app_version.json"
-URL_GITHUB_EXE = "https://github.com/JhonatasPSoares/ordem-e-ajuste/releases/download/latest/Transferencia.01.exe"
+URL_GITHUB_RAW = "https://raw.githubusercontent.com/JhonatasSoares/ordem-e-ajuste/main/Transferencia.01.py"
+URL_GITHUB_VERSAO = "https://raw.githubusercontent.com/JhonatasSoares/ordem-e-ajuste/main/app_version.json"
+URL_GITHUB_EXE = "https://github.com/JhonatasSoares/ordem-e-ajuste/releases/download/latest/Transferencia.01.exe"
 
 # URLs
 URL_LOGIN = "https://nespresso.wiser.log.br/login"
