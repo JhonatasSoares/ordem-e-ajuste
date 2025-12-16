@@ -84,11 +84,14 @@ def gerar_exe():
         print("🔨 Gerando executável...")
         
         if os.path.exists("build"):
-            shutil.rmtree("build")
+            shutil.rmtree("build", ignore_errors=True)
         if os.path.exists("dist"):
-            shutil.rmtree("dist")
+            shutil.rmtree("dist", ignore_errors=True)
         for spec_file in Path(".").glob("*.spec"):
-            spec_file.unlink()
+            try:
+                spec_file.unlink()
+            except:
+                pass
         
         subprocess.run(["python", "-m", "PyInstaller", "--onefile", "--windowed", SCRIPT_FILE], check=True)
         print("✅ Executável criado em: dist/Transferencia.01.exe")
@@ -97,7 +100,7 @@ def gerar_exe():
         print(f"❌ Erro ao gerar .exe: {e}")
         return False
 
-def fazer_release(tag="latest"):
+def fazer_release_git(tag="latest"):
     try:
         exe_path = "dist/Transferencia.01.exe"
         
@@ -105,22 +108,22 @@ def fazer_release(tag="latest"):
             print(f"❌ Arquivo {exe_path} não encontrado!")
             return False
         
-        print(f"📤 Fazendo upload do .exe para Release '{tag}'...")
+        print(f"\n📤 Fazendo release via Git com tag '{tag}'...")
         
-        subprocess.run(["gh", "release", "delete", tag, "-y"], capture_output=True)
+        subprocess.run(["git", "add", exe_path], check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"Release: {tag} - novo executável"], check=True, capture_output=True)
+        
         subprocess.run(["git", "tag", "-d", tag], capture_output=True)
         subprocess.run(["git", "push", "origin", f":{tag}"], capture_output=True)
         
         subprocess.run(["git", "tag", tag], check=True, capture_output=True)
         subprocess.run(["git", "push", "origin", tag], check=True, capture_output=True)
         
-        subprocess.run(["gh", "release", "create", tag, exe_path, "--title", f"Transferencia.01 ({tag})", "--latest"], check=True)
-        
         print(f"✅ Release '{tag}' criada com sucesso!")
+        print(f"✅ .exe armazenado no repositório Git")
         return True
     except subprocess.CalledProcessError as e:
         print(f"❌ Erro ao criar release: {e}")
-        print("⚠️  Certifique-se de ter 'gh' (GitHub CLI) instalado: https://cli.github.com")
         return False
 
 if __name__ == "__main__":
@@ -128,7 +131,7 @@ if __name__ == "__main__":
     print("🚀 ATUALIZAR E FAZER PUSH PARA GITHUB")
     print("=" * 60)
     
-    mensagem = input("\n📝 Digite a mensagem de commit (ex: Fix: corrigir erro de login): ").strip()
+    mensagem = input("\n📝 Digite a mensagem de commit (ex: Update: versão 2.5.2): ").strip()
     
     if not mensagem:
         print("❌ Mensagem vazia. Abortado.")
@@ -141,11 +144,11 @@ if __name__ == "__main__":
     if tem_mudanca_deps:
         print("\n⚠️  Detectadas mudanças nas dependências!")
         atualizar_versao(com_exe=True)
-        fazer_commit(mensagem)
         
         if gerar_exe():
-            print("\n🔗 Criando Release no GitHub...")
-            fazer_release()
+            fazer_commit(mensagem)
+            print("\n🔗 Criando release no Git...")
+            fazer_release_git()
     else:
         print("\n✨ Nenhuma mudança de dependências detectada.")
         atualizar_versao(com_exe=False)
@@ -155,3 +158,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("✅ TUDO PRONTO! SEU APP FOI ATUALIZADO.")
     print("=" * 60)
+    print("\n📌 Resumo:")
+    print("   - Código atualizado no GitHub")
+    print("   - .exe armazenado no repositório (se houver mudança de dependências)")
+    print("   - Usuários receberão atualização automática na próxima execução")
