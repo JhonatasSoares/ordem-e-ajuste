@@ -797,7 +797,7 @@ def toggle_modo_headless():
 
 if __name__ == "__main__":
     root = ttk.Window(themename="litera")
-    root.title("🤖 Ordem e Ajuste 2.5.4")
+    root.title("🤖 Ordem e Ajuste 2.5.3")
     root.geometry("900x800")
     
     btn_headless = None
