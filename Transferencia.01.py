@@ -150,7 +150,7 @@ def verificar_atualizacao_github():
             return False
         hash_atual = calcular_hash_arquivo(script_atual)
         
-        if hash_github and hash_github != hash_atual:
+        if hash_github and hash_github != hash_atual and hash_github != "exe_build":
             try:
                 response_script = requests.get(URL_GITHUB_RAW, timeout=10)
                 if response_script.status_code == 200:
