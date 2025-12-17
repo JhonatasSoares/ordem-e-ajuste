@@ -25,6 +25,9 @@ update_and_push.py
 gerar_exe.py
 auto_build.py
 temp_gerar_exe.py
+compilar_exe.py
+criar_instalador.py
+setup.iss
 
 # Virtual environments
 venv/
