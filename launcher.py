@@ -18,20 +18,26 @@ def baixar_codigo_github():
             with open(TEMP_SCRIPT, "w", encoding="utf-8") as f:
                 f.write(response.text)
             return TEMP_SCRIPT
+        else:
+            print(f"Erro: Status {response.status_code}")
     except Exception as e:
         print(f"Erro ao baixar: {e}")
     
     return None
 
 if __name__ == "__main__":
-    script_path = baixar_codigo_github()
-    
-    if script_path:
-        try:
-            subprocess.run([sys.executable, script_path])
-        except Exception as e:
-            print(f"Erro ao executar: {e}")
+    try:
+        script_path = baixar_codigo_github()
+        
+        if script_path:
+            print(f"Executando: {script_path}")
+            resultado = subprocess.run([sys.executable, script_path], capture_output=False)
+            print(f"Código encerrado com status: {resultado.returncode}")
+        else:
+            print("Falha ao carregar código.")
             input("Pressione Enter para sair...")
-    else:
-        print("Falha ao carregar código.")
+    except Exception as e:
+        print(f"Erro geral: {e}")
+        import traceback
+        traceback.print_exc()
         input("Pressione Enter para sair...")
